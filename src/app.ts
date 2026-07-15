@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -21,7 +21,7 @@ function parseCorsOrigins(value: string): string[] {
     .filter(Boolean);
 }
 
-export function createApp() {
+export function createApp(): Express {
   const env = getEnv();
   const app = express();
   const allowedOrigins = parseCorsOrigins(env.CORS_ORIGIN);
@@ -32,7 +32,6 @@ export function createApp() {
   app.use(
     cors({
       origin(origin, callback) {
-        // Allow non-browser clients (no Origin header) and configured frontend URLs
         if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
           callback(null, true);
           return;
@@ -82,5 +81,3 @@ export function createApp() {
 
   return app;
 }
-
-export const app = createApp();

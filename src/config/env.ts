@@ -35,7 +35,10 @@ function loadEnv(): Env {
   if (!result.success) {
     const formatted = result.error.flatten().fieldErrors;
     console.error('Invalid environment configuration:', formatted);
-    throw new Error('Environment validation failed');
+    const missing = Object.entries(formatted)
+      .map(([key, messages]) => `${key}: ${(messages ?? []).join(', ')}`)
+      .join('; ');
+    throw new Error(`Environment validation failed — ${missing}`);
   }
 
   return result.data;
