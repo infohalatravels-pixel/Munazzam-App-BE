@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import WebSocket from 'ws';
 import { getEnv } from '../config/index.js';
 
 let client: SupabaseClient | null = null;
@@ -10,6 +11,10 @@ function getClient(): SupabaseClient {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
+      },
+      // Vercel Node 20 has no global WebSocket; supabase-js requires one at init
+      realtime: {
+        transport: WebSocket as unknown as typeof globalThis.WebSocket,
       },
     });
   }
