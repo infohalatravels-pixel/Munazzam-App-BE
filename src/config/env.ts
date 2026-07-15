@@ -13,8 +13,9 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   SUPABASE_ANON_KEY: z.string().default(''),
-  SUPABASE_STORAGE_BUCKET: z.string().default('nasaq-uploads'),
+  SUPABASE_STORAGE_BUCKET: z.string().default('munazzam-uploads'),
 
+  // Comma-separated list of allowed frontend origins (e.g. local + Vercel)
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 
   BCRYPT_ROUNDS: z.coerce.number().int().min(10).max(15).default(12),
