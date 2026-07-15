@@ -5,9 +5,12 @@ import { authService } from '../service/auth.service.js';
 import type { LoginBody, LogoutBody, RefreshBody } from '../validator/auth.validator.js';
 
 function getRequestMeta(req: Request) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0]?.trim();
+  const rawIp = forwardedIp || req.ip || '';
   return {
     userAgent: req.headers['user-agent'],
-    ip: req.ip,
+    ip: rawIp.slice(0, 45) || undefined,
   };
 }
 

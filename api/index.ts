@@ -2,37 +2,40 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { Express } from 'express';
 
 let cachedApp: Express | null = null;
+let bootPromise: Promise<Express> | null = null;
 
-function formatEnvError(error: unknown): { message: string; details?: unknown } {
-  if (error instanceof Error) {
-    return { message: error.message };
-  }
-  return { message: String(error) };
+/**
+ * Disable Vercel's body parser so Express can read the raw request stream.
+ * Pre-parsed bodies leave express.json() with an empty stream → empty login body → errors.
+ */
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+async function getApp(): Promise<Express> {
+  if (cachedApp) return cachedApp;
+  bootPromise ??= import('../src/app.js').then((mod) => {
+    cachedApp = mod.createApp();
+    return cachedApp;
+  });
+  return bootPromise;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (!cachedApp) {
-      // Load dotenv only when available; Vercel injects env vars directly
-      try {
-        await import('dotenv/config');
-      } catch {
-        // ignore
-      }
-      const { createApp } = await import('../src/app.js');
-      cachedApp = createApp();
-    }
-
-    return cachedApp(req, res);
+    const app = await getApp();
+    return app(req, res);
   } catch (error) {
     console.error('[munazzam-api] bootstrap failed:', error);
-    const formatted = formatEnvError(error);
+    const message = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       success: false,
       error: 'FUNCTION_BOOTSTRAP_FAILED',
-      message: formatted.message,
+      message,
       hint:
-        'Set all required backend env vars in Vercel → Settings → Environment Variables (Production), then Redeploy. Required: JWT_ACCESS_SECRET, JWT_REFRESH_SECRET, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CORS_ORIGIN.',
+        'Set required backend env vars in Vercel → Settings → Environment Variables (Production), then Redeploy.',
     });
   }
 }

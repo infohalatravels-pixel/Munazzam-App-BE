@@ -29,6 +29,20 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
 
   app.use(helmet());
+  // If a platform already stuffed a Buffer/string into body, normalize before json parser
+  app.use((req, _res, next) => {
+    try {
+      if (Buffer.isBuffer(req.body)) {
+        const raw = req.body.toString('utf8');
+        req.body = raw ? JSON.parse(raw) : {};
+      } else if (typeof req.body === 'string' && req.body.length > 0) {
+        req.body = JSON.parse(req.body);
+      }
+    } catch {
+      req.body = {};
+    }
+    next();
+  });
   app.use(
     cors({
       origin(origin, callback) {
@@ -47,6 +61,7 @@ export function createApp(): Express {
       max: env.RATE_LIMIT_MAX_REQUESTS,
       standardHeaders: true,
       legacyHeaders: false,
+      validate: { xForwardedForHeader: false },
     }),
   );
   app.use(express.json({ limit: '1mb' }));

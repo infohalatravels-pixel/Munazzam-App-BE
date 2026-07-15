@@ -43,13 +43,17 @@ export class AuthService {
     const roleName = user.roles?.name as UserRole;
     const tokens = await this.issueTokens(user.id, user.email, roleName, meta);
 
-    await activityLogRepository.create({
-      userId: user.id,
-      action: 'auth.login',
-      entityType: 'user',
-      entityId: user.id,
-      ip: meta.ip,
-    });
+    try {
+      await activityLogRepository.create({
+        userId: user.id,
+        action: 'auth.login',
+        entityType: 'user',
+        entityId: user.id,
+        ip: meta.ip,
+      });
+    } catch {
+      // Login should succeed even if activity logging fails
+    }
 
     return {
       user: mapUserToProfile(user),
