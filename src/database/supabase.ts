@@ -12,9 +12,10 @@ function getClient(): SupabaseClient {
         autoRefreshToken: false,
         persistSession: false,
       },
-      // Vercel Node 20 has no global WebSocket; supabase-js requires one at init
+      // Vercel Node has no global WebSocket; supabase-js requires a transport at init
       realtime: {
-        transport: WebSocket as unknown as typeof globalThis.WebSocket,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transport: WebSocket as any,
       },
     });
   }
