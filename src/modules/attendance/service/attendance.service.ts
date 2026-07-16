@@ -22,6 +22,11 @@ import {
   isLateCheckIn,
   type AssignedProjectLocation,
 } from '../utils/clock-rules.js';
+import {
+  getTodayWorkDateRangeIso,
+  getWorkDateKey as toWorkDateKey,
+  getWorkDateRangeIso,
+} from '../../../shared/time/work-timezone.js';
 import type {
   AttendanceHistoryQuery,
   AttendanceMarkInput,
@@ -62,7 +67,7 @@ export class AttendanceService {
 
     if (!isClockInScheduleOpen(workStartTime)) {
       throw new AppError(
-        `Clock-in opens at ${workStartTime}. Please wait until your scheduled check-in time.`,
+        `Clock-in opens at ${workStartTime} Qatar time. Please wait until your scheduled check-in time.`,
         400,
         'CLOCK_IN_TOO_EARLY',
       );
@@ -425,26 +430,15 @@ export class AttendanceService {
   }
 
   private getTodayRange(): { start: string; end: string } {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-    return { start: start.toISOString(), end: end.toISOString() };
+    return getTodayWorkDateRangeIso();
   }
 
   private getWorkDateKey(date: Date): string {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Karachi',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
+    return toWorkDateKey(date);
   }
 
   private getDateRangeForWorkDate(dateKey: string): { start: string; end: string } {
-    const [year, month, day] = dateKey.split('-').map(Number);
-    const start = new Date(year, month - 1, day, 0, 0, 0, 0);
-    const end = new Date(year, month - 1, day, 23, 59, 59, 999);
-    return { start: start.toISOString(), end: end.toISOString() };
+    return getWorkDateRangeIso(dateKey);
   }
 }
 

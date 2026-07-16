@@ -1,4 +1,10 @@
 import { calculateDistanceMeters, isWithinRadius } from '../../../utils/geo.js';
+import {
+  getMinutesInWorkZone,
+  isAtOrAfterWorkTime,
+  parseWorkTimeToMinutes,
+  WORK_TIMEZONE,
+} from '../../../shared/time/work-timezone.js';
 
 /** Fixed geofence for clock in/out (meters). */
 export const CLOCK_RADIUS_METERS = 150;
@@ -7,19 +13,27 @@ export const CLOCK_GRACE_MINUTES = 15;
 /** Hours after clock-in before clock-out is allowed. */
 export const HALF_SHIFT_HOURS = 4;
 
+export { WORK_TIMEZONE };
+
 export interface AssignedProjectLocation {
   latitude: number;
   longitude: number;
   radiusMeters: number;
 }
 
+/**
+ * Instant of today's scheduled work time in Asia/Qatar, as a Date (UTC ms).
+ * Used for late grace calculations.
+ */
 export function parseWorkTimeToday(workTime: string, now = new Date()): Date {
-  const [hours, minutes] = workTime.split(':').map(Number);
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours || 0, minutes || 0, 0, 0);
+  const targetMinutes = parseWorkTimeToMinutes(workTime);
+  const currentMinutes = getMinutesInWorkZone(now);
+  const diffMs = (targetMinutes - currentMinutes) * 60 * 1000;
+  return new Date(now.getTime() + diffMs);
 }
 
 export function isClockInScheduleOpen(workStartTime: string, now = new Date()): boolean {
-  return now.getTime() >= parseWorkTimeToday(workStartTime, now).getTime();
+  return isAtOrAfterWorkTime(workStartTime, now);
 }
 
 export function isLateCheckIn(

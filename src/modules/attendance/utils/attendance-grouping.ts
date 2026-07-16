@@ -1,4 +1,5 @@
 import type { AttendanceRecord } from '../types/attendance.types.js';
+import { getWorkDateKey } from '../../../shared/time/work-timezone.js';
 
 export interface DailyAttendanceRecord {
   id: string;
@@ -10,15 +11,8 @@ export interface DailyAttendanceRecord {
   user?: AttendanceRecord['user'];
 }
 
-const WORK_TIMEZONE = 'Asia/Karachi';
-
 function getWorkDate(markedAt: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: WORK_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(markedAt));
+  return getWorkDateKey(new Date(markedAt));
 }
 
 export function groupAttendanceByDay(records: AttendanceRecord[]): DailyAttendanceRecord[] {
